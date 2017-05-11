@@ -15,10 +15,13 @@ pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
 
 macro_rules! print {
     ($($arg:tt)*) => ({
-        use core::fmt::Write;
-        let mut write = $crate::vga_buffer::WRITER.lock();
-        writer.write_fmt(fomrat_args!($($arg)*)).unwrap();
+        $crate::vga_buffer::print(format_args!($($arg)*));
     });
+}
+
+macro_rules! println {
+    ($fmt:expr) => (print!(concat!($fmt, "\n")));
+    ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\n"), $($arg)*));
 }
 
 #[allow(dead_code)]
@@ -133,16 +136,9 @@ struct ScreenChar {
     color_code: ColorCode,
 }
 
-pub fn print_something() {
+pub fn print(args:fmt::Arguments) {
     use core::fmt::Write;
-    let mut writer = Writer {
-        column_position: 0,
-        color_code: ColorCode::new(Color::LightGreen, Color::Black),
-        buffer: unsafe { Unique::new(0xb8000 as *mut _) },
-    };
-    writer.write_byte(b'H');
-    writer.write_str("ello! ");
-    write!(writer, "The numbers are {} and {}", 42, 1.0/3.0);
+    WRITER.lock().write_fmt(args).unwrap();
 }
 
 pub fn clear_screen() {
