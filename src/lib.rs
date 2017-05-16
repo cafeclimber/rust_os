@@ -9,6 +9,7 @@ extern crate spin;
 extern crate multiboot2;
 #[macro_use]
 extern crate bitflags;
+extern crate x86_64;
 
 #[macro_use]
 mod vga_buffer;
@@ -58,12 +59,7 @@ pub extern fn rust_main(multiboot_information_address: usize) {
         memory_map_tag.memory_areas()
     );
 
-    for i in 0.. {
-        if let None = frame_allocator.allocate_frame() {
-            println!("allocated {} frames", i);
-            break;
-        }
-    }
+    memory::test_paging(&mut frame_allocator);
 
     loop{}
 }

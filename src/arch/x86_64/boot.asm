@@ -85,9 +85,13 @@ check_long_mode:
         jmp error
         
 setup_page_tables:
+        ; setup recursive mapping (511th P4 entry points to itself)
+        mov eax, p4_table
+        or eax, 0b11            ; present + writable
+        mov [p4_table + 511 * 8], eax
         ; map the first P4 entry to P3 table
         mov eax, p3_table
-        or eax, 0b11            ; Present and writable
+        or eax, 0b11            ; present + writable
         mov [p4_table], eax
 
         ; map the first P3 entry to P2 table
