@@ -59,7 +59,8 @@ pub extern fn rust_main(multiboot_information_address: usize) {
         memory_map_tag.memory_areas()
     );
 
-    memory::test_paging(&mut frame_allocator);
+    memory::remap_the_kernel(&mut frame_allocator, boot_info);
+    println!("It didn't crash!");
 
     loop{}
 }

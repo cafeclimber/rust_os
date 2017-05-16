@@ -1,5 +1,5 @@
 pub use self::area_frame_allocator::AreaFrameAllocator;
-pub use self::paging::test_paging;
+pub use self::paging::remap_the_kernel;
 use self::paging::PhysicalAddress;
 
 mod area_frame_allocator;
@@ -12,6 +12,11 @@ pub struct Frame {
     number: usize,
 }
 
+struct FrameIter {
+    start: Frame,
+    end: Frame,
+}
+
 impl Frame {
     fn containing_address(address: usize) -> Frame {
         Frame { number: address / PAGE_SIZE }
@@ -19,6 +24,31 @@ impl Frame {
 
     fn start_address(&self) -> PhysicalAddress {
         self.number * PAGE_SIZE
+    }
+
+    fn clone(&self) -> Frame {
+        Frame { number: self.number }
+    }
+
+    fn range_inclusive(start: Frame, end: Frame) -> FrameIter {
+        FrameIter {
+            start: start,
+            end: end,
+        }
+    }
+}
+
+impl Iterator for FrameIter {
+    type Item = Frame;
+
+    fn next(&mut self) -> Option<Frame> {
+        if self.start <= self.end {
+            let frame = self.start.clone();
+            self.start.number += 1;
+            Some(frame)
+        } else {
+            None
+        }
     }
 }
 
