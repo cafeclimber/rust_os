@@ -1,4 +1,4 @@
-use core::ops::{Deref, DerefMut};
+use core::ops::{Deref, DerefMut, Add};
 
 use multiboot2::BootInformation;
 
@@ -23,6 +23,7 @@ pub struct Page {
     number: usize,
 }
 
+#[derive(Clone)]
 pub struct PageIter {
     start: Page,
     end: Page,
@@ -51,7 +52,7 @@ impl Page {
         }
     }
 
-    fn start_address(&self) -> usize {
+    pub fn start_address(&self) -> usize {
         self.number * PAGE_SIZE
     }
 
@@ -69,6 +70,13 @@ impl Page {
 
     fn p1_index(&self) -> usize {
         (self.number >> 0) & 0o777
+    }
+}
+
+impl Add<usize> for Page {
+    type Output = Page;
+    fn add(self, rhs: usize) -> Page {
+        Page { number: self.number + rhs }
     }
 }
 
