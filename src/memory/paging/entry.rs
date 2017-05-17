@@ -1,3 +1,5 @@
+use multiboot2::ElfSection;
+
 use memory::Frame;
 
 bitflags! {
@@ -46,3 +48,25 @@ impl Entry {
     }
 }
 
+impl EntryFlags {
+    pub fn from_elf_section_flags(section: &ElfSection) -> EntryFlags {
+        use multiboot2::{ELF_SECTION_ALLOCATED,
+                         ELF_SECTION_WRITABLE,
+                         ELF_SECTION_EXECUTABLE};
+
+        let mut flags = EntryFlags::empty();
+
+        if section.flags().contains(ELF_SECTION_ALLOCATED) {
+            // section is loaded into memory
+            flags = flags | PRESENT;
+        }
+        if section.flags().contains(ELF_SECTION_WRITABLE) {
+            flags = flags | WRITABLE;
+        }
+        if !section.flags().contains(ELF_SECTION_EXECUTABLE) {
+            flags = flags | NO_EXECUTE;
+        }
+
+        flags
+    }
+}
