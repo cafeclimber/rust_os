@@ -1,4 +1,4 @@
-use memory::paging::{self, Page, PageIter};
+use memory::paging::{self, Page, PageIter, ActivePageTable};
 use memory::{PAGE_SIZE, FrameAllocator};
 
 pub struct Stack {

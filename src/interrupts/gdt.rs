@@ -1,4 +1,6 @@
 use x86_64::structures::tss::TaskStateSegment;
+use x86_64::structures::gdt::SegmentSelector;
+use x86_64::PrivilegeLevel;
 
 pub struct Gdt {
     table: [u64; 8],
@@ -27,6 +29,41 @@ impl Gdt {
             next_free: 1,
         }
     }
+
+    pub fn add_entry(&mut self, entry: Descriptor) -> SegmentSelector {
+        let index = match entry {
+            Descriptor::UserSegment(value) => self.push(value),
+            Descriptor::SystemSegment(value_low, value_high) => {
+                let index = self.push(value_low);
+                self.push(value_high);
+                index
+            }
+        };
+        SegmentSelector::new(index as u16, PrivilegeLevel::Ring0)
+    }
+
+    fn push (&mut self, value: u64) -> usize {
+        if self.next_free < self.table.len() {
+            let index = self.next_free;
+            self.table[index] = value;
+            self.next_free += 1;
+            index
+        } else {
+            panic!("GDT full");
+        }
+    }
+
+    pub fn load(&'static self) {
+        use x86_64::instructions::tables::{DescriptorTablePointer, lgdt};
+        use core::mem::size_of;
+
+        let ptr = DescriptorTablePointer {
+            base: self.table.as_ptr() as u64,
+            limit: (self.table.len() * size_of::<u64>() - 1) as u16,
+        };
+
+        unsafe { lgdt(&ptr) };
+    }
 }
 
 impl Descriptor {
@@ -48,7 +85,7 @@ impl Descriptor {
         // limit (the '-1' is needed since the bound is inclusive)
         low.set_bits(0..16, (size_of::<TaskStateSegment>() - 1) as u64);
         // type (ob1001 = available 64-bit tss)
-        low.set_bits(40.44, 0b1001);
+        low.set_bits(40..44, 0b1001);
 
         let mut high = 0;
         high.set_bits(0..32, ptr.get_bits(32..64));
